@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./main.css" />
+  <title>Module A3</title>
+</head>
+<body>
+  <div class="container mx-auto mt-5">
+      <select id="data-selector" class="mb-4">
+        <option value="data.json">data.json</option>
+        <option value="data2.json">data2.json</option>
+        <option value="data3.json">data3.json</option>
+        <option value="data4.json">data4.json</option>
+      </select>
+    <div class="flex items-start justify-between w-full">
+      <div class="flex flex-col w-2/3" id="reviews"></div>
+      <div class="shadow w-1/5 ml-10 px-4 py-2">
+        <h2>Average rate</h2>
+        <p class="text-3xl font-bold text-green-500">
+          <span id="average">--</span>
+          <small class="text-sm inline-block ml-1 text-gray-700">/5</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const $reviews = document.getElementById("reviews");
+      const $average = document.getElementById("average");
+      const $dataSelector = document.getElementById("data-selector");
+
+      const renderStars = (count) =>
+        Array.from({ length: count }, () => `<img src="star.svg" alt="star" class="w-4 ml-1" />`).join("");
+
+      const renderReview = ({ author, certified, rating, content }) => `
+        <div class="user-review-container">
+          <article>
+            <h3>
+              ${author}
+              ${certified ? `<span class="certified-badge"><img src="certified.svg" alt="certified" class="w-4" /></span>` : ""}
+            </h3>
+            <div class="stars">${renderStars(rating)}</div>
+            <p>${content}</p>
+          </article>
+        </div>
+      `;
+
+      const fetchData = async (source) => {
+        try {
+          const res = await fetch(`./${source}`);
+          const data = (await res.json())
+            .filter(({ published }) => published)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          const total = data.reduce((sum, r) => sum + r.rating, 0);
+          $average.textContent = (total / data.length || 0).toFixed(1);
+
+          $reviews.innerHTML = data.map(renderReview).join("");
+        } catch (err) {
+          $reviews.innerHTML = "<p>Erreur lors du chargement des données.</p>";
+          $average.textContent = "--";
+          console.error(err);
+        }
+      };
+
+      $dataSelector.addEventListener("change", (e) => fetchData(e.target.value));
+      
+      fetchData($dataSelector.value);
+    });
+  </script>
+</body>
+</html>
